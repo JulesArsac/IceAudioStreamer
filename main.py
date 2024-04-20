@@ -73,9 +73,8 @@ class PrinterI(Demo.Printer):
             print("Player was already playing, stopping it first.")
             player.stop()
         player.set_media(media)
-        # t = Timer(0.5, self.startStream, [player])
-        # t.start()
-        player.play()
+        t = Timer(0.5, self.startStream, [player])
+        t.start()
         print(f"Playing {s} on {url}")
         return url
 
