@@ -5,11 +5,48 @@ import Ice
 import sys
 import Demo
 import sqlite3
+import vlc
+import time
+import socket
+from threading import Timer
+
+
+def get_local_ip():
+    try:
+        # Create a socket object
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # Connect to a remote server that doesn't exist, just to get the local IP
+        s.connect(("10.255.255.255", 1))
+        # Get the local IP address
+        ip_address = s.getsockname()[0]
+        return ip_address
+    except Exception as e:
+        print("Error:", e)
+        return None
+
+
+global localIp
+localIp = get_local_ip()
 
 
 class PrinterI(Demo.Printer):
+    global streamingLinks
+    streamingLinks = {}
+    global playerInstances
+    playerInstances = {}
+    global vlc_instance
+    vlc_instance = vlc.Instance('--no-xlib')
 
-    def playMusic(self, s, current=None):
+    def startStream(self, player):
+        player.play()
+
+    def playMusic(self, s, current):
+        global streamingLinks
+        global playerInstances
+        global vlc_instance
+
+
+        print(f"Got request to play {s}")
         con = sqlite3.connect('songs.db')
         cur = con.cursor()
         cur.execute(f"select path from songs where title = '{s}'")
@@ -18,15 +55,33 @@ class PrinterI(Demo.Printer):
             return None
         path = rows[0]
         con.close()
-        try:
-            with open(path, 'rb') as f:
-                print(f"Sending {path} to client")
-                data = f.read()
-                return data
-        except FileNotFoundError:
-            return None
+        clientIp = current.con.getInfo().remoteAddress
+        clientIp = clientIp.replace("::ffff:", "")
+        print(f"Request from {clientIp}")
+        if clientIp not in playerInstances:
+            print("Creating new player instance")
+            playerInstances[clientIp] = vlc_instance.media_player_new()
+        player = playerInstances[clientIp]
+        if clientIp not in streamingLinks:
+            print("Creating new streaming link")
+            streamingLinks[clientIp] = f"rtsp://{get_local_ip()}:8554/{clientIp}"
+        url = streamingLinks[clientIp]
+        media = vlc_instance.media_new_path(path)
+        options = f":sout=#transcode{{acodec=mpga,ab=128,channels=2,samplerate=44100}}:rtp{{mux=ts,sdp={url}}}"
+        media.add_option(options)
+        if player.is_playing():
+            print("Player was already playing, stopping it first.")
+            player.stop()
+        player.set_media(media)
+        # t = Timer(0.5, self.startStream, [player])
+        # t.start()
+        player.play()
+        print(f"Playing {s} on {url}")
+        return url
 
     def getSongList(self, current):
+        client_info = current.con.getInfo()
+        print("Client IP address:", client_info.remoteAddress)
         con = sqlite3.connect('songs.db')
         cur = con.cursor()
         # cur.execute("DROP TABLE IF EXISTS songs")
@@ -114,6 +169,7 @@ class PrinterI(Demo.Printer):
 
 
 class FileTransferI(Demo.FileTransfer):
+
     songsfolder = "songs/"
 
     def sendFile(self, data, title, current=None):

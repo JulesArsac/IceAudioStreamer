@@ -172,7 +172,7 @@ if 'PrinterPrx' not in _M_Demo.__dict__:
     _M_Demo._t_PrinterDisp = IcePy.defineClass('::Demo::Printer', Printer, (), None, ())
     Printer._ice_type = _M_Demo._t_PrinterDisp
 
-    Printer._op_playMusic = IcePy.Operation('playMusic', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), _M_Demo._t_Bytes, False, 0), ())
+    Printer._op_playMusic = IcePy.Operation('playMusic', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), IcePy._t_string, False, 0), ())
     Printer._op_getSongList = IcePy.Operation('getSongList', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (), (), ((), IcePy._t_string, False, 0), ())
     Printer._op_getSearchByTitle = IcePy.Operation('getSearchByTitle', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), IcePy._t_string, False, 0), ())
     Printer._op_getSearchByAuthor = IcePy.Operation('getSearchByAuthor', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), IcePy._t_string, False, 0), ())
