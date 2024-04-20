@@ -56,6 +56,7 @@ class PrinterI(Demo.Printer):
         path = rows[0]
         con.close()
         clientIp = current.con.getInfo().remoteAddress
+        clientIp = clientIp.replace("::ffff:", "")
         print(f"Request from {clientIp}")
         if clientIp not in playerInstances:
             print("Creating new player instance")
@@ -72,8 +73,9 @@ class PrinterI(Demo.Printer):
             print("Player was already playing, stopping it first.")
             player.stop()
         player.set_media(media)
-        t = Timer(0.5, self.startStream, [player])
-        t.start()
+        # t = Timer(0.5, self.startStream, [player])
+        # t.start()
+        player.play()
         print(f"Playing {s} on {url}")
         return url
 
