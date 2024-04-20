@@ -5,7 +5,7 @@ module Demo
 
     interface Printer
     {
-        Bytes playMusic(string s);
+        string playMusic(string s);
         string getSongList();
         string getSearchByTitle(string title);
         string getSearchByAuthor(string author);
