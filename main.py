@@ -26,7 +26,7 @@ class PrinterI(Demo.Printer):
         except FileNotFoundError:
             return None
 
-    def getSongList(self, current=None):
+    def getSongList(self, current):
         con = sqlite3.connect('songs.db')
         cur = con.cursor()
         # cur.execute("DROP TABLE IF EXISTS songs")
@@ -112,8 +112,8 @@ class PrinterI(Demo.Printer):
         con.commit()
         con.close()
 
-class FileTransferI(Demo.FileTransfer):
 
+class FileTransferI(Demo.FileTransfer):
     songsfolder = "songs/"
 
     def sendFile(self, data, title, current=None):
@@ -139,10 +139,10 @@ class FileTransferI(Demo.FileTransfer):
 
 props = Ice.createProperties(sys.argv)
 props.setProperty("Ice.MessageSizeMax", "0")
+# props.setProperty("Ice.Trace.Network", "2")
 id = Ice.InitializationData()
 id.properties = props
 communicator = Ice.initialize(id)
-
 
 adapter = communicator.createObjectAdapterWithEndpoints("SimplePrinterAdapter", "default -p 10000")
 printer = PrinterI()
