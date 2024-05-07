@@ -24,6 +24,99 @@ __name__ = 'Demo'
 if '_t_Bytes' not in _M_Demo.__dict__:
     _M_Demo._t_Bytes = IcePy.defineSequence('::Demo::Bytes', (), IcePy._t_byte)
 
+if 'StreamingInfo' not in _M_Demo.__dict__:
+    _M_Demo.StreamingInfo = Ice.createTempClass()
+    class StreamingInfo(Ice.Value):
+        def __init__(self, url='', clientIP='', duration=''):
+            self.url = url
+            self.clientIP = clientIP
+            self.duration = duration
+
+        def ice_id(self):
+            return '::Demo::StreamingInfo'
+
+        @staticmethod
+        def ice_staticId():
+            return '::Demo::StreamingInfo'
+
+        def __str__(self):
+            return IcePy.stringify(self, _M_Demo._t_StreamingInfo)
+
+        __repr__ = __str__
+
+    _M_Demo._t_StreamingInfo = IcePy.defineValue('::Demo::StreamingInfo', StreamingInfo, -1, (), False, False, None, (
+        ('url', (), IcePy._t_string, False, 0),
+        ('clientIP', (), IcePy._t_string, False, 0),
+        ('duration', (), IcePy._t_string, False, 0)
+    ))
+    StreamingInfo._ice_type = _M_Demo._t_StreamingInfo
+
+    _M_Demo.StreamingInfo = StreamingInfo
+    del StreamingInfo
+
+_M_Demo._t_ClientCallback = IcePy.defineValue('::Demo::ClientCallback', Ice.Value, -1, (), False, True, None, ())
+
+if 'ClientCallbackPrx' not in _M_Demo.__dict__:
+    _M_Demo.ClientCallbackPrx = Ice.createTempClass()
+    class ClientCallbackPrx(Ice.ObjectPrx):
+
+        def test(self, context=None):
+            return _M_Demo.ClientCallback._op_test.invoke(self, ((), context))
+
+        def testAsync(self, context=None):
+            return _M_Demo.ClientCallback._op_test.invokeAsync(self, ((), context))
+
+        def begin_test(self, _response=None, _ex=None, _sent=None, context=None):
+            return _M_Demo.ClientCallback._op_test.begin(self, ((), _response, _ex, _sent, context))
+
+        def end_test(self, _r):
+            return _M_Demo.ClientCallback._op_test.end(self, _r)
+
+        @staticmethod
+        def checkedCast(proxy, facetOrContext=None, context=None):
+            return _M_Demo.ClientCallbackPrx.ice_checkedCast(proxy, '::Demo::ClientCallback', facetOrContext, context)
+
+        @staticmethod
+        def uncheckedCast(proxy, facet=None):
+            return _M_Demo.ClientCallbackPrx.ice_uncheckedCast(proxy, facet)
+
+        @staticmethod
+        def ice_staticId():
+            return '::Demo::ClientCallback'
+    _M_Demo._t_ClientCallbackPrx = IcePy.defineProxy('::Demo::ClientCallback', ClientCallbackPrx)
+
+    _M_Demo.ClientCallbackPrx = ClientCallbackPrx
+    del ClientCallbackPrx
+
+    _M_Demo.ClientCallback = Ice.createTempClass()
+    class ClientCallback(Ice.Object):
+
+        def ice_ids(self, current=None):
+            return ('::Demo::ClientCallback', '::Ice::Object')
+
+        def ice_id(self, current=None):
+            return '::Demo::ClientCallback'
+
+        @staticmethod
+        def ice_staticId():
+            return '::Demo::ClientCallback'
+
+        def test(self, current=None):
+            raise NotImplementedError("servant method 'test' not implemented")
+
+        def __str__(self):
+            return IcePy.stringify(self, _M_Demo._t_ClientCallbackDisp)
+
+        __repr__ = __str__
+
+    _M_Demo._t_ClientCallbackDisp = IcePy.defineClass('::Demo::ClientCallback', ClientCallback, (), None, ())
+    ClientCallback._ice_type = _M_Demo._t_ClientCallbackDisp
+
+    ClientCallback._op_test = IcePy.Operation('test', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (), (), None, ())
+
+    _M_Demo.ClientCallback = ClientCallback
+    del ClientCallback
+
 _M_Demo._t_Printer = IcePy.defineValue('::Demo::Printer', Ice.Value, -1, (), False, True, None, ())
 
 if 'PrinterPrx' not in _M_Demo.__dict__:
@@ -172,7 +265,7 @@ if 'PrinterPrx' not in _M_Demo.__dict__:
     _M_Demo._t_PrinterDisp = IcePy.defineClass('::Demo::Printer', Printer, (), None, ())
     Printer._ice_type = _M_Demo._t_PrinterDisp
 
-    Printer._op_playMusic = IcePy.Operation('playMusic', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), IcePy._t_string, False, 0), ())
+    Printer._op_playMusic = IcePy.Operation('playMusic', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), _M_Demo._t_StreamingInfo, False, 0), ())
     Printer._op_getSongList = IcePy.Operation('getSongList', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (), (), ((), IcePy._t_string, False, 0), ())
     Printer._op_getSearchByTitle = IcePy.Operation('getSearchByTitle', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), IcePy._t_string, False, 0), ())
     Printer._op_getSearchByAuthor = IcePy.Operation('getSearchByAuthor', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), IcePy._t_string, False, 0), ())

@@ -71,16 +71,28 @@ class PrinterI(Demo.Printer):
         media.add_option(options)
         if player.is_playing():
             print("Player was already playing, stopping it first.")
-            player.stop()
+            player.pause()
         player.set_media(media)
+
+        media.parse()
+        duration = media.get_duration()
+
+        hours, remainder = divmod(duration / 1000, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        duration_str = f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}"
+
+        info = Demo.StreamingInfo()
+        info.url = url
+        info.duration = duration_str
+        info.clientIP = clientIp
+
         t = Timer(0.5, self.startStream, [player])
         t.start()
         print(f"Playing {s} on {url}")
-        return url
+        return info
 
     def getSongList(self, current):
         client_info = current.con.getInfo()
-        print("Client IP address:", client_info.remoteAddress)
         con = sqlite3.connect('songs.db')
         cur = con.cursor()
         # cur.execute("DROP TABLE IF EXISTS songs")

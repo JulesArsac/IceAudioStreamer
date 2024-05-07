@@ -5,6 +5,6 @@ import Ice
 Ice.updateModule("Demo")
 
 # Modules:
-from Demo import Printer_ice
+import Printer_ice
 
 # Submodules:
