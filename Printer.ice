@@ -19,6 +19,8 @@ module Demo
         void changeSongTitle(string title, string newTitle);
         void changeSongAuthor(string title, string newAuthor);
         void deleteSong(string title);
+        void stopMusic();
+        void playPauseMusic();
     }
 
     interface FileTransfer {
