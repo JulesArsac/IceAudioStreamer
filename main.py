@@ -9,15 +9,13 @@ import vlc
 import socket
 from threading import Timer
 import threading
+from datetime import datetime, timedelta
 
 
 def get_local_ip():
     try:
-        # Create a socket object
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        # Connect to a remote server that doesn't exist, just to get the local IP
         s.connect(("10.255.255.255", 1))
-        # Get the local IP address
         ip_address = s.getsockname()[0]
         return ip_address
     except Exception as e:
@@ -36,6 +34,8 @@ class PrinterI(Demo.Printer):
     playerInstances = {}
     global clientStates
     clientStates = {}
+    global playersAges
+    playersAges = {}
     global vlc_instance
     vlc_instance = vlc.Instance('--no-xlib', '--network-caching=0')
 
@@ -50,6 +50,7 @@ class PrinterI(Demo.Printer):
         global playerInstances
         global clientStates
         global vlc_instance
+        global playersAges
 
         print(f"Got request to play {s}")
         con = sqlite3.connect('songs.db')
@@ -69,6 +70,23 @@ class PrinterI(Demo.Printer):
         #     t = threading.Thread(target=self.deletePlayerForClient, args=(player, clientIp,))
 
         print(f"Request from {clientIp}")
+
+        if clientIp not in playersAges:
+            playersAges[clientIp] = datetime.now()
+        lastPlayerAge = playersAges[clientIp]
+        currentTime = datetime.now()
+        difference = currentTime - lastPlayerAge
+        secondsSinceLastRenew = difference.total_seconds()
+        print(f"Seconds since last renew: {secondsSinceLastRenew}")
+        if secondsSinceLastRenew > 100:
+            print("Renewing player instance")
+            player = playerInstances[clientIp]
+            t = threading.Thread(target=self.deletePlayerForClient, args=(player, clientIp,))
+            t.start()
+            t.join()
+            playerInstances[clientIp] = vlc_instance.media_player_new()
+            playersAges[clientIp] = datetime.now()
+
         if clientIp not in playerInstances:
             print("Creating new player instance")
             playerInstances[clientIp] = vlc_instance.media_player_new()
