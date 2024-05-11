@@ -24,6 +24,36 @@ __name__ = 'Demo'
 if '_t_Bytes' not in _M_Demo.__dict__:
     _M_Demo._t_Bytes = IcePy.defineSequence('::Demo::Bytes', (), IcePy._t_byte)
 
+if 'StreamingInfo' not in _M_Demo.__dict__:
+    _M_Demo.StreamingInfo = Ice.createTempClass()
+    class StreamingInfo(Ice.Value):
+        def __init__(self, url='', clientIP='', duration=0):
+            self.url = url
+            self.clientIP = clientIP
+            self.duration = duration
+
+        def ice_id(self):
+            return '::Demo::StreamingInfo'
+
+        @staticmethod
+        def ice_staticId():
+            return '::Demo::StreamingInfo'
+
+        def __str__(self):
+            return IcePy.stringify(self, _M_Demo._t_StreamingInfo)
+
+        __repr__ = __str__
+
+    _M_Demo._t_StreamingInfo = IcePy.defineValue('::Demo::StreamingInfo', StreamingInfo, -1, (), False, False, None, (
+        ('url', (), IcePy._t_string, False, 0),
+        ('clientIP', (), IcePy._t_string, False, 0),
+        ('duration', (), IcePy._t_long, False, 0)
+    ))
+    StreamingInfo._ice_type = _M_Demo._t_StreamingInfo
+
+    _M_Demo.StreamingInfo = StreamingInfo
+    del StreamingInfo
+
 _M_Demo._t_Printer = IcePy.defineValue('::Demo::Printer', Ice.Value, -1, (), False, True, None, ())
 
 if 'PrinterPrx' not in _M_Demo.__dict__:
@@ -172,7 +202,7 @@ if 'PrinterPrx' not in _M_Demo.__dict__:
     _M_Demo._t_PrinterDisp = IcePy.defineClass('::Demo::Printer', Printer, (), None, ())
     Printer._ice_type = _M_Demo._t_PrinterDisp
 
-    Printer._op_playMusic = IcePy.Operation('playMusic', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), IcePy._t_string, False, 0), ())
+    Printer._op_playMusic = IcePy.Operation('playMusic', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), _M_Demo._t_StreamingInfo, False, 0), ())
     Printer._op_getSongList = IcePy.Operation('getSongList', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (), (), ((), IcePy._t_string, False, 0), ())
     Printer._op_getSearchByTitle = IcePy.Operation('getSearchByTitle', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), IcePy._t_string, False, 0), ())
     Printer._op_getSearchByAuthor = IcePy.Operation('getSearchByAuthor', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), IcePy._t_string, False, 0), ())

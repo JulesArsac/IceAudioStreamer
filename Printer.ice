@@ -2,10 +2,17 @@ module Demo
 {
     sequence<byte> Bytes;
 
+    class StreamingInfo
+    {
+        string url;
+        string clientIP;
+        long duration;
+    }
+
 
     interface Printer
     {
-        string playMusic(string s);
+        StreamingInfo playMusic(string s);
         string getSongList();
         string getSearchByTitle(string title);
         string getSearchByAuthor(string author);

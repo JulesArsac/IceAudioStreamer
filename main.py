@@ -29,6 +29,7 @@ global localIp
 localIp = get_local_ip()
 
 
+
 class PrinterI(Demo.Printer):
     global streamingLinks
     streamingLinks = {}
@@ -40,11 +41,13 @@ class PrinterI(Demo.Printer):
     def startStream(self, player):
         player.play()
 
+    # def mediaEnded(self, clientIp):
+    #     print("Media has finished playing!")
+
     def playMusic(self, s, current):
         global streamingLinks
         global playerInstances
         global vlc_instance
-
 
         print(f"Got request to play {s}")
         con = sqlite3.connect('songs.db')
@@ -71,16 +74,28 @@ class PrinterI(Demo.Printer):
         media.add_option(options)
         if player.is_playing():
             print("Player was already playing, stopping it first.")
-            player.stop()
+            player.pause()
         player.set_media(media)
-        t = Timer(0.5, self.startStream, [player])
+
+        timerDelay = 0.5
+        media.parse()
+        duration_ms = media.get_duration()
+        print(f"Duration: {duration_ms}")
+
+
+        info = Demo.StreamingInfo()
+        info.url = url
+        info.duration = duration_ms
+        info.clientIP = clientIp
+
+        t = Timer(timerDelay, self.startStream, [player])
         t.start()
+        # player.event_manager().event_attach(vlc.EventType.MediaPlayerEndReached, lambda event: self.mediaEnded(clientIp))
         print(f"Playing {s} on {url}")
-        return url
+        return info
 
     def getSongList(self, current):
         client_info = current.con.getInfo()
-        print("Client IP address:", client_info.remoteAddress)
         con = sqlite3.connect('songs.db')
         cur = con.cursor()
         # cur.execute("DROP TABLE IF EXISTS songs")
@@ -168,7 +183,6 @@ class PrinterI(Demo.Printer):
 
 
 class FileTransferI(Demo.FileTransfer):
-
     songsfolder = "songs/"
 
     def sendFile(self, data, title, current=None):
