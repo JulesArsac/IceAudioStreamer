@@ -118,6 +118,7 @@ class PrinterI(Demo.Printer):
     def playPauseMusic(self, current):
         global playerInstances
         global clientStates
+        bufferdelay = 2000
         clientIp = current.con.getInfo().remoteAddress
         clientIp = clientIp.replace("::ffff:", "")
         if clientIp in playerInstances and clientIp in clientStates:
@@ -125,10 +126,16 @@ class PrinterI(Demo.Printer):
                 player = playerInstances[clientIp]
                 player.pause()
                 clientStates[clientIp] = "paused"
+                return 0
             elif clientStates[clientIp] == "paused":
                 player = playerInstances[clientIp]
+                player.set_time(player.get_time() - bufferdelay)
+                media = player.get_media()
+                media.parse()
+                remaining = media.get_duration() - player.get_time()
                 player.play()
                 clientStates[clientIp] = "playing"
+                return remaining
 
 
 

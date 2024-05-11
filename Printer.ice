@@ -20,7 +20,7 @@ module Demo
         void changeSongAuthor(string title, string newAuthor);
         void deleteSong(string title);
         void stopMusic();
-        void playPauseMusic();
+        long playPauseMusic();
     }
 
     interface FileTransfer {
