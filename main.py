@@ -37,7 +37,7 @@ class PrinterI(Demo.Printer):
     global clientStates
     clientStates = {}
     global vlc_instance
-    vlc_instance = vlc.Instance('--no-xlib')
+    vlc_instance = vlc.Instance('--no-xlib', '--network-caching=0')
 
     def startStream(self, player):
         player.play()
