@@ -6,9 +6,9 @@ import sys
 import Demo
 import sqlite3
 import vlc
-import time
 import socket
 from threading import Timer
+import threading
 
 
 def get_local_ip():
@@ -29,12 +29,13 @@ global localIp
 localIp = get_local_ip()
 
 
-
 class PrinterI(Demo.Printer):
     global streamingLinks
     streamingLinks = {}
     global playerInstances
     playerInstances = {}
+    global clientStates
+    clientStates = {}
     global vlc_instance
     vlc_instance = vlc.Instance('--no-xlib')
 
@@ -47,6 +48,7 @@ class PrinterI(Demo.Printer):
     def playMusic(self, s, current):
         global streamingLinks
         global playerInstances
+        global clientStates
         global vlc_instance
 
         print(f"Got request to play {s}")
@@ -60,6 +62,12 @@ class PrinterI(Demo.Printer):
         con.close()
         clientIp = current.con.getInfo().remoteAddress
         clientIp = clientIp.replace("::ffff:", "")
+
+        # if clientIp in clientStates and clientStates[clientIp] == "playing":
+        #     print("Client is already playing a song.")
+        #     player = playerInstances[clientIp]
+        #     t = threading.Thread(target=self.deletePlayerForClient, args=(player, clientIp,))
+
         print(f"Request from {clientIp}")
         if clientIp not in playerInstances:
             print("Creating new player instance")
@@ -82,17 +90,54 @@ class PrinterI(Demo.Printer):
         duration_ms = media.get_duration()
         print(f"Duration: {duration_ms}")
 
-
         info = Demo.StreamingInfo()
         info.url = url
         info.duration = duration_ms
         info.clientIP = clientIp
+
+        clientStates[clientIp] = "playing"
 
         t = Timer(timerDelay, self.startStream, [player])
         t.start()
         # player.event_manager().event_attach(vlc.EventType.MediaPlayerEndReached, lambda event: self.mediaEnded(clientIp))
         print(f"Playing {s} on {url}")
         return info
+
+    def stopMusic(self, current):
+        global playerInstances
+        global clientStates
+        clientIp = current.con.getInfo().remoteAddress
+        clientIp = clientIp.replace("::ffff:", "")
+        if clientIp in playerInstances:
+            print(f"Stopping player for {clientIp}")
+            clientStates[clientIp] = "stopped"
+            player = playerInstances[clientIp]
+            t = threading.Thread(target=self.deletePlayerForClient, args=(player, clientIp,))
+            t.start()
+
+    def playPauseMusic(self, current):
+        global playerInstances
+        global clientStates
+        clientIp = current.con.getInfo().remoteAddress
+        clientIp = clientIp.replace("::ffff:", "")
+        if clientIp in playerInstances and clientIp in clientStates:
+            if clientStates[clientIp] == "playing":
+                player = playerInstances[clientIp]
+                player.pause()
+                clientStates[clientIp] = "paused"
+            elif clientStates[clientIp] == "paused":
+                player = playerInstances[clientIp]
+                player.play()
+                clientStates[clientIp] = "playing"
+
+
+
+    def deletePlayerForClient(self, player, clientIp):
+        global playerInstances
+        player.stop()
+        player.release()
+        playerInstances.pop(clientIp)
+
 
     def getSongList(self, current):
         client_info = current.con.getInfo()
