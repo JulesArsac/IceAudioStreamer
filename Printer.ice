@@ -6,7 +6,7 @@ module Demo
     {
         string url;
         string clientIP;
-        string duration;
+        long duration;
     }
 
 
