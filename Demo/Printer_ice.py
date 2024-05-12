@@ -24,6 +24,36 @@ __name__ = 'Demo'
 if '_t_Bytes' not in _M_Demo.__dict__:
     _M_Demo._t_Bytes = IcePy.defineSequence('::Demo::Bytes', (), IcePy._t_byte)
 
+if 'StreamingInfo' not in _M_Demo.__dict__:
+    _M_Demo.StreamingInfo = Ice.createTempClass()
+    class StreamingInfo(Ice.Value):
+        def __init__(self, url='', clientIP='', duration=0):
+            self.url = url
+            self.clientIP = clientIP
+            self.duration = duration
+
+        def ice_id(self):
+            return '::Demo::StreamingInfo'
+
+        @staticmethod
+        def ice_staticId():
+            return '::Demo::StreamingInfo'
+
+        def __str__(self):
+            return IcePy.stringify(self, _M_Demo._t_StreamingInfo)
+
+        __repr__ = __str__
+
+    _M_Demo._t_StreamingInfo = IcePy.defineValue('::Demo::StreamingInfo', StreamingInfo, -1, (), False, False, None, (
+        ('url', (), IcePy._t_string, False, 0),
+        ('clientIP', (), IcePy._t_string, False, 0),
+        ('duration', (), IcePy._t_long, False, 0)
+    ))
+    StreamingInfo._ice_type = _M_Demo._t_StreamingInfo
+
+    _M_Demo.StreamingInfo = StreamingInfo
+    del StreamingInfo
+
 _M_Demo._t_Printer = IcePy.defineValue('::Demo::Printer', Ice.Value, -1, (), False, True, None, ())
 
 if 'PrinterPrx' not in _M_Demo.__dict__:
@@ -114,6 +144,42 @@ if 'PrinterPrx' not in _M_Demo.__dict__:
         def end_deleteSong(self, _r):
             return _M_Demo.Printer._op_deleteSong.end(self, _r)
 
+        def stopMusic(self, context=None):
+            return _M_Demo.Printer._op_stopMusic.invoke(self, ((), context))
+
+        def stopMusicAsync(self, context=None):
+            return _M_Demo.Printer._op_stopMusic.invokeAsync(self, ((), context))
+
+        def begin_stopMusic(self, _response=None, _ex=None, _sent=None, context=None):
+            return _M_Demo.Printer._op_stopMusic.begin(self, ((), _response, _ex, _sent, context))
+
+        def end_stopMusic(self, _r):
+            return _M_Demo.Printer._op_stopMusic.end(self, _r)
+
+        def playPauseMusic(self, context=None):
+            return _M_Demo.Printer._op_playPauseMusic.invoke(self, ((), context))
+
+        def playPauseMusicAsync(self, context=None):
+            return _M_Demo.Printer._op_playPauseMusic.invokeAsync(self, ((), context))
+
+        def begin_playPauseMusic(self, _response=None, _ex=None, _sent=None, context=None):
+            return _M_Demo.Printer._op_playPauseMusic.begin(self, ((), _response, _ex, _sent, context))
+
+        def end_playPauseMusic(self, _r):
+            return _M_Demo.Printer._op_playPauseMusic.end(self, _r)
+
+        def doesSongExist(self, title, context=None):
+            return _M_Demo.Printer._op_doesSongExist.invoke(self, ((title, ), context))
+
+        def doesSongExistAsync(self, title, context=None):
+            return _M_Demo.Printer._op_doesSongExist.invokeAsync(self, ((title, ), context))
+
+        def begin_doesSongExist(self, title, _response=None, _ex=None, _sent=None, context=None):
+            return _M_Demo.Printer._op_doesSongExist.begin(self, ((title, ), _response, _ex, _sent, context))
+
+        def end_doesSongExist(self, _r):
+            return _M_Demo.Printer._op_doesSongExist.end(self, _r)
+
         @staticmethod
         def checkedCast(proxy, facetOrContext=None, context=None):
             return _M_Demo.PrinterPrx.ice_checkedCast(proxy, '::Demo::Printer', facetOrContext, context)
@@ -164,6 +230,15 @@ if 'PrinterPrx' not in _M_Demo.__dict__:
         def deleteSong(self, title, current=None):
             raise NotImplementedError("servant method 'deleteSong' not implemented")
 
+        def stopMusic(self, current=None):
+            raise NotImplementedError("servant method 'stopMusic' not implemented")
+
+        def playPauseMusic(self, current=None):
+            raise NotImplementedError("servant method 'playPauseMusic' not implemented")
+
+        def doesSongExist(self, title, current=None):
+            raise NotImplementedError("servant method 'doesSongExist' not implemented")
+
         def __str__(self):
             return IcePy.stringify(self, _M_Demo._t_PrinterDisp)
 
@@ -172,13 +247,16 @@ if 'PrinterPrx' not in _M_Demo.__dict__:
     _M_Demo._t_PrinterDisp = IcePy.defineClass('::Demo::Printer', Printer, (), None, ())
     Printer._ice_type = _M_Demo._t_PrinterDisp
 
-    Printer._op_playMusic = IcePy.Operation('playMusic', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), _M_Demo._t_Bytes, False, 0), ())
+    Printer._op_playMusic = IcePy.Operation('playMusic', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), _M_Demo._t_StreamingInfo, False, 0), ())
     Printer._op_getSongList = IcePy.Operation('getSongList', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (), (), ((), IcePy._t_string, False, 0), ())
     Printer._op_getSearchByTitle = IcePy.Operation('getSearchByTitle', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), IcePy._t_string, False, 0), ())
     Printer._op_getSearchByAuthor = IcePy.Operation('getSearchByAuthor', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), IcePy._t_string, False, 0), ())
     Printer._op_changeSongTitle = IcePy.Operation('changeSongTitle', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0)), (), None, ())
     Printer._op_changeSongAuthor = IcePy.Operation('changeSongAuthor', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0), ((), IcePy._t_string, False, 0)), (), None, ())
     Printer._op_deleteSong = IcePy.Operation('deleteSong', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), None, ())
+    Printer._op_stopMusic = IcePy.Operation('stopMusic', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (), (), None, ())
+    Printer._op_playPauseMusic = IcePy.Operation('playPauseMusic', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (), (), ((), IcePy._t_long, False, 0), ())
+    Printer._op_doesSongExist = IcePy.Operation('doesSongExist', Ice.OperationMode.Normal, Ice.OperationMode.Normal, False, None, (), (((), IcePy._t_string, False, 0),), (), ((), IcePy._t_bool, False, 0), ())
 
     _M_Demo.Printer = Printer
     del Printer

@@ -5,38 +5,170 @@ import Ice
 import sys
 import Demo
 import sqlite3
+import vlc
+import socket
+from threading import Timer
+import threading
+from datetime import datetime, timedelta
+
+
+def get_local_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("10.255.255.255", 1))
+        ip_address = s.getsockname()[0]
+        return ip_address
+    except Exception as e:
+        print("Error:", e)
+        return None
+
+
+global localIp
+localIp = get_local_ip()
 
 
 class PrinterI(Demo.Printer):
+    global streamingLinks
+    streamingLinks = {}
+    global playerInstances
+    playerInstances = {}
+    global clientStates
+    clientStates = {}
+    global playersAges
+    playersAges = {}
+    global vlc_instance
+    vlc_instance = vlc.Instance('--no-xlib', '--network-caching=0')
 
-    def playMusic(self, s, current=None):
+    def startStream(self, player):
+        player.play()
+
+    def playMusic(self, s, current):
+        global streamingLinks
+        global playerInstances
+        global clientStates
+        global vlc_instance
+        global playersAges
+
+        print(f"Got request to play {s}")
         con = sqlite3.connect('songs.db')
         cur = con.cursor()
-        cur.execute(f"select path from songs where title = '{s}'")
+        cur.execute(f"select path from songs where queryName = '{s}'")
         rows = cur.fetchone()
         if rows is None:
+            print("Song not found.")
             return None
         path = rows[0]
         con.close()
-        try:
-            with open(path, 'rb') as f:
-                print(f"Sending {path} to client")
-                data = f.read()
-                return data
-        except FileNotFoundError:
-            return None
+        clientIp = current.con.getInfo().remoteAddress
+        clientIp = clientIp.replace("::ffff:", "")
 
-    def getSongList(self, current=None):
+        print(f"Request from {clientIp}")
+
+        if clientIp not in playersAges:
+            playersAges[clientIp] = datetime.now()
+        lastPlayerAge = playersAges[clientIp]
+        currentTime = datetime.now()
+        difference = currentTime - lastPlayerAge
+        secondsSinceLastRenew = difference.total_seconds()
+        print(f"Seconds since last renew: {secondsSinceLastRenew}")
+        if secondsSinceLastRenew > 10:
+            print("Renewing player instance")
+            player = playerInstances[clientIp]
+            t = threading.Thread(target=self.deletePlayerForClient, args=(player, clientIp,))
+            t.start()
+            playerInstances[clientIp] = vlc_instance.media_player_new()
+            playersAges[clientIp] = datetime.now()
+
+        if clientIp not in playerInstances:
+            print("Creating new player instance")
+            playerInstances[clientIp] = vlc_instance.media_player_new()
+        player = playerInstances[clientIp]
+        if clientIp not in streamingLinks:
+            print("Creating new streaming link")
+            streamingLinks[clientIp] = f"rtsp://{get_local_ip()}:8554/{clientIp}"
+        url = streamingLinks[clientIp]
+        media = vlc_instance.media_new_path(path)
+        options = f":sout=#transcode{{acodec=mpga,ab=128,channels=2,samplerate=44100}}:rtp{{mux=ts,sdp={url}}}"
+        media.add_option(options)
+        if player.is_playing():
+            print("Player was already playing, stopping it first.")
+            t = threading.Thread(target=lambda: player.pause())
+            t.start()
+        player.set_media(media)
+
+        timerDelay = 0.0
+        media.parse()
+        duration_ms = media.get_duration()
+        print(f"Duration: {duration_ms}")
+
+        info = Demo.StreamingInfo()
+        info.url = url
+        info.duration = duration_ms
+        info.clientIP = clientIp
+
+        clientStates[clientIp] = "playing"
+
+        t = Timer(timerDelay, self.startStream, [player])
+        t.start()
+        print(f"Playing {s} on {url}")
+        return info
+
+    def doesSongExist(self, title, current):
         con = sqlite3.connect('songs.db')
         cur = con.cursor()
-        # cur.execute("DROP TABLE IF EXISTS songs")
-        # cur.execute("CREATE TABLE IF NOT EXISTS songs(id INTEGER PRIMARY KEY , title VARCHAR(255) NOT NULL, author VARCHAR(255) DEFAULT 'Unknown', path VARCHAR(255));")
-        # cur.execute("INSERT INTO songs (title, author, path) VALUES ('Song1', 'Author1', 'songs/song1.mp3')")
-        # con.commit()
+        cur.execute(f"SELECT * FROM songs WHERE queryName = '{title}'")
+        rows = cur.fetchall()
+        con.close()
+        return len(rows) > 0
+
+
+    def stopMusic(self, current):
+        global playerInstances
+        global clientStates
+        clientIp = current.con.getInfo().remoteAddress
+        clientIp = clientIp.replace("::ffff:", "")
+        if clientIp in playerInstances:
+            print(f"Stopping player for {clientIp}")
+            clientStates[clientIp] = "stopped"
+            player = playerInstances[clientIp]
+            t = threading.Thread(target=self.deletePlayerForClient, args=(player, clientIp,))
+            t.start()
+
+    def playPauseMusic(self, current):
+        global playerInstances
+        global clientStates
+        bufferdelay = 2000
+        clientIp = current.con.getInfo().remoteAddress
+        clientIp = clientIp.replace("::ffff:", "")
+        print(f"Play/Pause request from {clientIp}")
+        if clientIp in playerInstances and clientIp in clientStates:
+            if clientStates[clientIp] == "playing":
+                player = playerInstances[clientIp]
+                player.pause()
+                clientStates[clientIp] = "paused"
+                return 0
+            elif clientStates[clientIp] == "paused":
+                player = playerInstances[clientIp]
+                player.set_time(player.get_time() - bufferdelay)
+                media = player.get_media()
+                media.parse()
+                remaining = media.get_duration() - player.get_time()
+                player.play()
+                clientStates[clientIp] = "playing"
+                return remaining
+
+    def deletePlayerForClient(self, player, clientIp):
+        global playerInstances
+        player.stop()
+        player.release()
+        playerInstances.pop(clientIp)
+
+    def getSongList(self, current):
+        con = sqlite3.connect('songs.db')
+        cur = con.cursor()
         cur.execute("SELECT * FROM songs")
         rows = cur.fetchall()
 
-        # Convert the results to a list of dictionaries
         results = []
         for row in rows:
             result_dict = {}
@@ -44,7 +176,6 @@ class PrinterI(Demo.Printer):
                 result_dict[col[0]] = row[idx]
             results.append(result_dict)
 
-        # Convert the list of dictionaries to a JSON string
         json_string = json.dumps(results)
         con.close()
         return json_string
@@ -112,8 +243,8 @@ class PrinterI(Demo.Printer):
         con.commit()
         con.close()
 
-class FileTransferI(Demo.FileTransfer):
 
+class FileTransferI(Demo.FileTransfer):
     songsfolder = "songs/"
 
     def sendFile(self, data, title, current=None):
@@ -139,10 +270,10 @@ class FileTransferI(Demo.FileTransfer):
 
 props = Ice.createProperties(sys.argv)
 props.setProperty("Ice.MessageSizeMax", "0")
+# props.setProperty("Ice.Trace.Network", "2")
 id = Ice.InitializationData()
 id.properties = props
 communicator = Ice.initialize(id)
-
 
 adapter = communicator.createObjectAdapterWithEndpoints("SimplePrinterAdapter", "default -p 10000")
 printer = PrinterI()
@@ -150,7 +281,6 @@ adapter.add(printer, communicator.stringToIdentity("SimplePrinter"))
 adapter.activate()
 print("Printer server started")
 
-# Create a new adapter for the FileTransfer service
 file_transfer_adapter = communicator.createObjectAdapterWithEndpoints("FileTransferAdapter", "default -p 10001")
 file_transfer = FileTransferI()
 file_transfer_adapter.add(file_transfer, communicator.stringToIdentity("FileTransfer"))

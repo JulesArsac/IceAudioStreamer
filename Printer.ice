@@ -2,16 +2,26 @@ module Demo
 {
     sequence<byte> Bytes;
 
+    class StreamingInfo
+    {
+        string url;
+        string clientIP;
+        long duration;
+    }
+
 
     interface Printer
     {
-        Bytes playMusic(string s);
+        StreamingInfo playMusic(string s);
         string getSongList();
         string getSearchByTitle(string title);
         string getSearchByAuthor(string author);
         void changeSongTitle(string title, string newTitle);
         void changeSongAuthor(string title, string newAuthor);
         void deleteSong(string title);
+        void stopMusic();
+        long playPauseMusic();
+        bool doesSongExist(string title);
     }
 
     interface FileTransfer {
