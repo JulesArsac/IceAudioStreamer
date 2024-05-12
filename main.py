@@ -71,7 +71,7 @@ class PrinterI(Demo.Printer):
         difference = currentTime - lastPlayerAge
         secondsSinceLastRenew = difference.total_seconds()
         print(f"Seconds since last renew: {secondsSinceLastRenew}")
-        if secondsSinceLastRenew > 10:
+        if secondsSinceLastRenew > 100:
             print("Renewing player instance")
             player = playerInstances[clientIp]
             t = threading.Thread(target=self.deletePlayerForClient, args=(player, clientIp,))
@@ -161,7 +161,6 @@ class PrinterI(Demo.Printer):
         global playerInstances
         player.stop()
         player.release()
-        playerInstances.pop(clientIp)
 
     def getSongList(self, current):
         con = sqlite3.connect('songs.db')
@@ -286,5 +285,7 @@ file_transfer = FileTransferI()
 file_transfer_adapter.add(file_transfer, communicator.stringToIdentity("FileTransfer"))
 file_transfer_adapter.activate()
 print("FileTransfer server started")
+
+print("Server ip: " + localIp)
 
 communicator.waitForShutdown()
