@@ -55,9 +55,10 @@ class PrinterI(Demo.Printer):
         print(f"Got request to play {s}")
         con = sqlite3.connect('songs.db')
         cur = con.cursor()
-        cur.execute(f"select path from songs where title = '{s}'")
+        cur.execute(f"select path from songs where queryName = '{s}'")
         rows = cur.fetchone()
         if rows is None:
+            print("Song not found.")
             return None
         path = rows[0]
         con.close()
@@ -78,12 +79,11 @@ class PrinterI(Demo.Printer):
         difference = currentTime - lastPlayerAge
         secondsSinceLastRenew = difference.total_seconds()
         print(f"Seconds since last renew: {secondsSinceLastRenew}")
-        if secondsSinceLastRenew > 100:
+        if secondsSinceLastRenew > 110:
             print("Renewing player instance")
             player = playerInstances[clientIp]
             t = threading.Thread(target=self.deletePlayerForClient, args=(player, clientIp,))
             t.start()
-            t.join()
             playerInstances[clientIp] = vlc_instance.media_player_new()
             playersAges[clientIp] = datetime.now()
 
@@ -103,7 +103,7 @@ class PrinterI(Demo.Printer):
             player.pause()
         player.set_media(media)
 
-        timerDelay = 0.5
+        timerDelay = 0.0
         media.parse()
         duration_ms = media.get_duration()
         print(f"Duration: {duration_ms}")
@@ -139,6 +139,7 @@ class PrinterI(Demo.Printer):
         bufferdelay = 2000
         clientIp = current.con.getInfo().remoteAddress
         clientIp = clientIp.replace("::ffff:", "")
+        print(f"Play/Pause request from {clientIp}")
         if clientIp in playerInstances and clientIp in clientStates:
             if clientStates[clientIp] == "playing":
                 player = playerInstances[clientIp]
