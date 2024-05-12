@@ -21,6 +21,7 @@ module Demo
         void deleteSong(string title);
         void stopMusic();
         long playPauseMusic();
+        bool doesSongExist(string title);
     }
 
     interface FileTransfer {

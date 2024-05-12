@@ -42,9 +42,6 @@ class PrinterI(Demo.Printer):
     def startStream(self, player):
         player.play()
 
-    # def mediaEnded(self, clientIp):
-    #     print("Media has finished playing!")
-
     def playMusic(self, s, current):
         global streamingLinks
         global playerInstances
@@ -65,11 +62,6 @@ class PrinterI(Demo.Printer):
         clientIp = current.con.getInfo().remoteAddress
         clientIp = clientIp.replace("::ffff:", "")
 
-        # if clientIp in clientStates and clientStates[clientIp] == "playing":
-        #     print("Client is already playing a song.")
-        #     player = playerInstances[clientIp]
-        #     t = threading.Thread(target=self.deletePlayerForClient, args=(player, clientIp,))
-
         print(f"Request from {clientIp}")
 
         if clientIp not in playersAges:
@@ -79,7 +71,7 @@ class PrinterI(Demo.Printer):
         difference = currentTime - lastPlayerAge
         secondsSinceLastRenew = difference.total_seconds()
         print(f"Seconds since last renew: {secondsSinceLastRenew}")
-        if secondsSinceLastRenew > 110:
+        if secondsSinceLastRenew > 10:
             print("Renewing player instance")
             player = playerInstances[clientIp]
             t = threading.Thread(target=self.deletePlayerForClient, args=(player, clientIp,))
@@ -100,7 +92,8 @@ class PrinterI(Demo.Printer):
         media.add_option(options)
         if player.is_playing():
             print("Player was already playing, stopping it first.")
-            player.pause()
+            t = threading.Thread(target=lambda: player.pause())
+            t.start()
         player.set_media(media)
 
         timerDelay = 0.0
@@ -117,9 +110,17 @@ class PrinterI(Demo.Printer):
 
         t = Timer(timerDelay, self.startStream, [player])
         t.start()
-        # player.event_manager().event_attach(vlc.EventType.MediaPlayerEndReached, lambda event: self.mediaEnded(clientIp))
         print(f"Playing {s} on {url}")
         return info
+
+    def doesSongExist(self, title, current):
+        con = sqlite3.connect('songs.db')
+        cur = con.cursor()
+        cur.execute(f"SELECT * FROM songs WHERE queryName = '{title}'")
+        rows = cur.fetchall()
+        con.close()
+        return len(rows) > 0
+
 
     def stopMusic(self, current):
         global playerInstances
@@ -156,27 +157,18 @@ class PrinterI(Demo.Printer):
                 clientStates[clientIp] = "playing"
                 return remaining
 
-
-
     def deletePlayerForClient(self, player, clientIp):
         global playerInstances
         player.stop()
         player.release()
         playerInstances.pop(clientIp)
 
-
     def getSongList(self, current):
-        client_info = current.con.getInfo()
         con = sqlite3.connect('songs.db')
         cur = con.cursor()
-        # cur.execute("DROP TABLE IF EXISTS songs")
-        # cur.execute("CREATE TABLE IF NOT EXISTS songs(id INTEGER PRIMARY KEY , title VARCHAR(255) NOT NULL, author VARCHAR(255) DEFAULT 'Unknown', path VARCHAR(255));")
-        # cur.execute("INSERT INTO songs (title, author, path) VALUES ('Song1', 'Author1', 'songs/song1.mp3')")
-        # con.commit()
         cur.execute("SELECT * FROM songs")
         rows = cur.fetchall()
 
-        # Convert the results to a list of dictionaries
         results = []
         for row in rows:
             result_dict = {}
@@ -184,7 +176,6 @@ class PrinterI(Demo.Printer):
                 result_dict[col[0]] = row[idx]
             results.append(result_dict)
 
-        # Convert the list of dictionaries to a JSON string
         json_string = json.dumps(results)
         con.close()
         return json_string
@@ -290,7 +281,6 @@ adapter.add(printer, communicator.stringToIdentity("SimplePrinter"))
 adapter.activate()
 print("Printer server started")
 
-# Create a new adapter for the FileTransfer service
 file_transfer_adapter = communicator.createObjectAdapterWithEndpoints("FileTransferAdapter", "default -p 10001")
 file_transfer = FileTransferI()
 file_transfer_adapter.add(file_transfer, communicator.stringToIdentity("FileTransfer"))
